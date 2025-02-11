@@ -1,0 +1,39 @@
+{
+    "name": "@ubio/webvision",
+    "version": "1.0.0",
+    "main": "out/main/index.js",
+    "type": "module",
+    "exports": {
+        "./page": "./out/page/index.js"
+    },
+    "files": [
+        "out/main",
+        "out/page",
+        "build/page.mjs"
+    ],
+    "scripts": {
+        "clean": "rm -rf out *.tsbuildinfo",
+        "dev": "npm run clean && tsc -b -w",
+        "compile": "npm run clean && tsc -b",
+        "compile:page": "esbuild src/page/index.ts --bundle --outfile=build/page.mjs --target=es2022 --format=esm",
+        "lint": "eslint --cache",
+        "test": "NODE_ENV=test mocha",
+        "version": "npm run compile",
+        "postversion": "npm publish --access=public && git push --tags origin main"
+    },
+    "pre-commit": [
+        "lint",
+        "compile",
+        "compile:page"
+    ],
+    "license": "ISC",
+    "devDependencies": {
+        "@nodescript/eslint-config": "^2.1.0",
+        "@types/node": "^22.13.1",
+        "esbuild": "^0.25.0",
+        "eslint": "^9.19.0",
+        "playwright": "^1.50.1",
+        "pre-commit": "^1.2.2",
+        "typescript": "^5.7.3"
+    }
+}
