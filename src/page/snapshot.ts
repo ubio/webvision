@@ -12,6 +12,8 @@ export const DEFAULT_SEMANTIC_TAGS = [
     'strong', 'em', 'sub', 'sup',
 ];
 
+export type SnapshotNode = Element | Text;
+
 export interface DomSnapshotOptions {
     skipHidden: boolean;
     skipImages: boolean;
@@ -43,7 +45,7 @@ export class DomSnapshot {
         };
         this.classList = [...(this.element?.classList ?? [])];
         if (this.element) {
-            this.parseTree(this.element);
+            this.parseTree(this.element, this.getAcceptedChildren(this.element));
         }
     }
 
@@ -100,9 +102,8 @@ export class DomSnapshot {
         return 'normal';
     }
 
-    private parseTree(el: Element): void {
+    private parseTree(el: Element, childNodes: SnapshotNode[]): void {
         this.children = [];
-        const childNodes = this.getAcceptedChildren(el);
         if (childNodes.length === 1) {
             return this.collapseWrapper(el, childNodes[0]);
         }
@@ -129,12 +130,14 @@ export class DomSnapshot {
         this.classList.push(...child.classList);
         const parentRank = this.options.tagPreference.indexOf(el.tagName.toLowerCase());
         const childRank = this.options.tagPreference.indexOf(child.tagName.toLowerCase());
-        const preferParent = parentRank !== -1 && (parentRank < childRank);
+        const preferParent = parentRank !== -1 && (parentRank < childRank || childRank === -1);
         if (!preferParent) {
             this.node = child;
         }
         // Continue parsing child element
-        this.parseTree(child);
+        if (this.element) {
+            this.parseTree(this.element, this.getAcceptedChildren(child));
+        }
     }
 
     private getAcceptedChildren(el: Element): Array<Element | Text> {

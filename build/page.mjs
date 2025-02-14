@@ -122,7 +122,7 @@ var DomSnapshot = class _DomSnapshot {
     };
     this.classList = [...this.element?.classList ?? []];
     if (this.element) {
-      this.parseTree(this.element);
+      this.parseTree(this.element, this.getAcceptedChildren(this.element));
     }
   }
   get element() {
@@ -166,9 +166,8 @@ var DomSnapshot = class _DomSnapshot {
     }
     return "normal";
   }
-  parseTree(el) {
+  parseTree(el, childNodes) {
     this.children = [];
-    const childNodes = this.getAcceptedChildren(el);
     if (childNodes.length === 1) {
       return this.collapseWrapper(el, childNodes[0]);
     }
@@ -193,11 +192,13 @@ var DomSnapshot = class _DomSnapshot {
     this.classList.push(...child.classList);
     const parentRank = this.options.tagPreference.indexOf(el.tagName.toLowerCase());
     const childRank = this.options.tagPreference.indexOf(child.tagName.toLowerCase());
-    const preferParent = parentRank !== -1 && parentRank < childRank;
+    const preferParent = parentRank !== -1 && (parentRank < childRank || childRank === -1);
     if (!preferParent) {
       this.node = child;
     }
-    this.parseTree(child);
+    if (this.element) {
+      this.parseTree(this.element, this.getAcceptedChildren(child));
+    }
   }
   getAcceptedChildren(el) {
     const childNodes = [...el.childNodes];
