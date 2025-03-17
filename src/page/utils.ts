@@ -25,7 +25,7 @@ export function isHidden(element: Element, options: Partial<VisibilityOptions> =
     const transform = style.transform;
     if (
         display === 'none' ||
-        (checkOpacity && opacity < 0.1) ||
+        (checkOpacity && opacity === 0) ||
         (checkVisibility && (visibility === 'hidden')) ||
         (checkTransform && transform.includes('scale(0)'))
     ) {
@@ -60,8 +60,8 @@ export function normalizeText(str: string) {
         .trim();
 }
 
-export function containsImage(el: Element): boolean {
-    return el.matches('img') || !!el.querySelector('img');
+export function containsSelector(el: Element, selector: string): boolean {
+    return el.matches(selector) || !!el.querySelector(selector);
 }
 
 export function isRecursiveInline(el: Element, ignoreTags: string[] = []): boolean {

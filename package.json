@@ -4,7 +4,8 @@
     "main": "out/main/index.js",
     "type": "module",
     "exports": {
-        "./page": "./out/page/index.js"
+        ".": "./out/page/index.js",
+        "./page": "./build/page.mjs"
     },
     "files": [
         "out/main",

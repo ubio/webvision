@@ -1,4 +1,4 @@
-import { containsImage, deepIsHidden, isRecursiveInline, normalizeText } from './utils.js';
+import { containsSelector, deepIsHidden, isRecursiveInline, normalizeText } from './utils.js';
 
 export const DEFAULT_SKIP_TAGS = ['svg', 'script', 'noscript', 'style', 'link', 'meta'];
 export const DEFAULT_SEMANTIC_TAGS = [
@@ -14,35 +14,71 @@ export const DEFAULT_SEMANTIC_TAGS = [
 
 export type SnapshotNode = Element | Text;
 
-export interface DomSnapshotOptions {
+export interface SnapshotOptions {
+    startId: number;
     skipHidden: boolean;
     skipImages: boolean;
+    skipIframes: boolean;
     skipEmptyText: boolean;
     skipTags: string[];
     tagPreference: string[];
     collapseInline: boolean;
 }
 
-export class DomSnapshot {
+export interface SnapshotItem {
+    nodeId: number;
+    nodeType: 'element' | 'text';
+    leaf: boolean;
+    rect: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    tagName?: string;
+    classList?: string[];
+    textContent?: string;
+    href?: string;
+    src?: string;
+    children?: SnapshotItem[];
+}
 
-    options: DomSnapshotOptions;
+export function createSnapshot(root: SnapshotNode, options: Partial<SnapshotOptions> = {}) {
+    const opts: SnapshotOptions = {
+        startId: 0,
+        skipHidden: true,
+        skipEmptyText: true,
+        skipImages: false,
+        skipIframes: false,
+        skipTags: DEFAULT_SKIP_TAGS,
+        tagPreference: DEFAULT_SEMANTIC_TAGS,
+        collapseInline: true,
+        ...options,
+    };
+    const counter = new Counter(opts.startId);
+    const nodeMap = new Map<number, SnapshotNode>();
+    const tree = new SnapshotTree(root, null, counter, opts);
+    tree.fillMap(nodeMap);
+    return {
+        nodeMap,
+        snapshot: tree.toJson(),
+        maxId: counter.value,
+    };
+}
+
+export class SnapshotTree {
+
+    nodeId: number;
     classList: string[];
-    children: DomSnapshot[] = [];
+    children: SnapshotTree[] = [];
 
     constructor(
         public node: Element | Text,
-        public parent: DomSnapshot | null,
-        options: Partial<DomSnapshotOptions>,
+        public parent: SnapshotTree | null,
+        public counter: Counter,
+        public options: SnapshotOptions,
     ) {
-        this.options = {
-            skipHidden: true,
-            skipEmptyText: true,
-            skipImages: false,
-            skipTags: DEFAULT_SKIP_TAGS,
-            tagPreference: DEFAULT_SEMANTIC_TAGS,
-            collapseInline: true,
-            ...options,
-        };
+        this.nodeId = this.counter.next();
         this.classList = [...(this.element?.classList ?? [])];
         if (this.element) {
             this.parseTree(this.element, this.getAcceptedChildren(this.element));
@@ -64,42 +100,29 @@ export class DomSnapshot {
         return normalizeText(text ?? '');
     }
 
-    get indent() {
-        return '  '.repeat(this.depth);
-    }
-
-    get isLeaf() {
+    get leaf() {
         return this.children.length === 0;
     }
 
     get tagName() {
-        return this.node instanceof Element ? this.node.tagName.toLowerCase() : '';
+        return this.node instanceof Element ? this.node.tagName.toLowerCase() : undefined;
     }
 
     get href() {
-        return this.node instanceof HTMLAnchorElement ? this.node.href : '';
+        return this.node instanceof HTMLAnchorElement ? this.node.href : undefined;
     }
 
     get src() {
-        return this.node instanceof HTMLImageElement ? this.node.src : '';
+        return (this.node as any).src ?? undefined;
     }
 
-    getFontSize(): number {
-        if (this.node instanceof Text) {
-            return this.parent?.getFontSize() ?? 0;
+    get clientRect() {
+        if (this.node instanceof Element) {
+            return this.node.getBoundingClientRect();
         }
-        return Number(getComputedStyle(this.node).fontSize?.replace('px', ''));
-    }
-
-    getTextSize(rootFontSize: number) {
-        const ownFontSize = this.getFontSize();
-        if (ownFontSize > 1.2 * rootFontSize) {
-            return 'large';
-        }
-        if (ownFontSize < 0.85 * rootFontSize) {
-            return 'small';
-        }
-        return 'normal';
+        const range = document.createRange();
+        range.selectNodeContents(this.node);
+        return range.getBoundingClientRect();
     }
 
     private parseTree(el: Element, childNodes: SnapshotNode[]): void {
@@ -112,7 +135,7 @@ export class DomSnapshot {
             return;
         }
         for (const childNode of childNodes) {
-            const snapshot = new DomSnapshot(childNode, this, this.options);
+            const snapshot = new SnapshotTree(childNode, this, this.counter, this.options);
             this.children.push(snapshot);
         }
     }
@@ -150,11 +173,19 @@ export class DomSnapshot {
             if (node instanceof Element) {
                 // Skip hidden elements (opacity, display, visibility, etc)
                 // TODO checkOpacity breaks PDF viewer
-                if (this.options.skipHidden && deepIsHidden(node, { checkOpacity: false })) {
+                if (this.options.skipHidden && deepIsHidden(node)) {
                     return false;
                 }
-                // Do not skip images even if other criteria are met
-                if (!this.options.skipImages && containsImage(node)) {
+                // Always include inputs
+                if (containsSelector(node, 'input')) {
+                    return true;
+                }
+                // Always include iframes, unless explicitly skipped
+                if (!this.options.skipIframes && containsSelector(node, 'iframe')) {
+                    return true;
+                }
+                // Always include images, unless explicitly skipped
+                if (!this.options.skipImages && containsSelector(node, 'img')) {
                     return true;
                 }
                 // Skip listed tags
@@ -173,34 +204,43 @@ export class DomSnapshot {
         });
     }
 
-    toIndentedText() {
-        const buffer = [
-            this.renderLine(),
-        ];
+    fillMap(map: Map<number, SnapshotNode>) {
+        map.set(this.nodeId, this.node);
         for (const child of this.children) {
-            buffer.push(child.toIndentedText());
+            child.fillMap(map);
         }
-        return buffer.join('\n');
     }
 
-    renderLine(): string {
-        const indent = '  '.repeat(this.depth);
-        const components: Array<string | null> = [indent];
-        if (this.node instanceof Text) {
-            return [indent, this.inlineText].filter(Boolean).join(' ');
-        }
-        const { tagName, src, href } = this;
-        components.push(tagName);
-        if (src) {
-            components.push(`(${src})`);
-        }
-        if (href) {
-            components.push(`(${href})`);
-        }
-        if (this.isLeaf) {
-            components.push(' ' + this.inlineText);
-        }
-        return components.filter(Boolean).join('');
+    toJson(): SnapshotItem {
+        const { top, left, width, height } = this.clientRect;
+        return {
+            nodeId: this.nodeId,
+            nodeType: this.node instanceof Element ? 'element' : 'text',
+            leaf: this.leaf,
+            tagName: this.tagName,
+            rect: {
+                x: left,
+                y: top,
+                width,
+                height,
+            },
+            classList: this.node instanceof Element ? this.classList : undefined,
+            textContent: this.leaf ? this.inlineText : undefined,
+            href: this.href,
+            src: this.src,
+            children: this.leaf ? undefined : this.children.map(child => child.toJson()),
+        };
+    }
+
+}
+
+export class Counter {
+
+    constructor(public value = 0) {}
+
+    next() {
+        this.value += 1;
+        return this.value;
     }
 
 }
