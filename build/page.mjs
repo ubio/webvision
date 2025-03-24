@@ -94,7 +94,7 @@ function renderSnapshot(snapshot, options = {}) {
   const opts = {
     depth: 0,
     includeNodeId: true,
-    includeClassList: true,
+    includeClassList: false,
     ...options
   };
   if (opts.maxHeight && snapshot.rect.y > opts.maxHeight) {
