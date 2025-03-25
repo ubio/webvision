@@ -199,6 +199,15 @@ function isRecursiveInline(el, ignoreTags = []) {
   }
   return true;
 }
+function getVisibleText(node) {
+  getSelection()?.removeAllRanges();
+  const range = document.createRange();
+  range.selectNode(node);
+  getSelection()?.addRange(range);
+  const visibleText = getSelection()?.toString().trim();
+  getSelection()?.removeAllRanges();
+  return visibleText ?? "";
+}
 
 // src/page/snapshot.ts
 var DEFAULT_SKIP_TAGS = ["svg", "script", "noscript", "style", "link", "meta"];
@@ -291,7 +300,7 @@ var SnapshotTree = class _SnapshotTree {
     return this.parent ? this.parent.depth + 1 : 0;
   }
   get inlineText() {
-    const text = this.node instanceof HTMLElement ? this.node.innerText : this.node.textContent;
+    const text = getVisibleText(this.node);
     return normalizeText(text ?? "");
   }
   get leaf() {
@@ -427,6 +436,7 @@ export {
   createSnapshot,
   deepIsHidden,
   getHighlightContainer,
+  getVisibleText,
   hasVisibleArea,
   highlightEl,
   highlightSnapshot,

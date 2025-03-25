@@ -1,4 +1,4 @@
-import { containsSelector, deepIsHidden, isRecursiveInline, normalizeText } from './utils.js';
+import { containsSelector, deepIsHidden, getVisibleText, isRecursiveInline, normalizeText } from './utils.js';
 
 export const DEFAULT_SKIP_TAGS = ['svg', 'script', 'noscript', 'style', 'link', 'meta'];
 export const DEFAULT_SEMANTIC_TAGS = [
@@ -94,9 +94,7 @@ export class SnapshotTree {
     }
 
     get inlineText() {
-        const text = this.node instanceof HTMLElement ?
-            this.node.innerText :
-            this.node.textContent;
+        const text = getVisibleText(this.node);
         return normalizeText(text ?? '');
     }
 

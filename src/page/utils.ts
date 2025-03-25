@@ -82,3 +82,13 @@ export function isRecursiveInline(el: Element, ignoreTags: string[] = []): boole
     }
     return true;
 }
+
+export function getVisibleText(node: Node) {
+    getSelection()?.removeAllRanges();
+    const range = document.createRange();
+    range.selectNode(node);
+    getSelection()?.addRange(range);
+    const visibleText = getSelection()?.toString().trim();
+    getSelection()?.removeAllRanges();
+    return visibleText ?? '';
+}
