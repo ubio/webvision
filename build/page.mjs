@@ -16,11 +16,11 @@ function highlightEl(snapshot, nodeMap, container) {
   if (isContainerEl) {
     return;
   }
-  const node = nodeMap.get(snapshot.nodeId);
+  const node = nodeMap.get(snapshot.ref);
   if (!(node instanceof Element)) {
     return;
   }
-  const color = getColor(snapshot.nodeId);
+  const color = getColor(snapshot.ref);
   const rect = node.getBoundingClientRect();
   const overlay = document.createElement("div");
   container.appendChild(overlay);
@@ -44,7 +44,7 @@ function highlightEl(snapshot, nodeMap, container) {
   label.style.opacity = "0.8";
   label.style.padding = "0 2px";
   label.style.transform = "translateY(50%)";
-  label.textContent = String(snapshot.nodeId);
+  label.textContent = String(snapshot.ref);
 }
 function removeHighlight() {
   const container = getHighlightContainer();
@@ -72,14 +72,17 @@ function getColor(index) {
 }
 
 // src/page/html.ts
-function captureAncestorHtml(el) {
-  const html = [];
+function captureNodePath(el, includeText = true) {
+  const path = [];
   let current = el;
   while (current) {
-    html.push(captureHtmlLine(current));
+    path.push(captureHtmlLine(current));
     current = current.parentElement;
   }
-  return html.reverse().join("\n");
+  if (includeText) {
+    path.unshift(el.innerText);
+  }
+  return path.reverse();
 }
 function captureHtmlLine(el) {
   const html = [];
@@ -94,7 +97,7 @@ function captureHtmlLine(el) {
 function renderSnapshot(snapshot, options = {}) {
   const opts = {
     depth: 0,
-    includeNodeId: true,
+    includeRef: true,
     includeClassList: false,
     ...options
   };
@@ -122,8 +125,8 @@ function renderLine(snapshot, options) {
     return [indent, snapshot.textContent].filter(Boolean).join(" ");
   }
   components.push(snapshot.tagName ?? "");
-  if (options.includeNodeId) {
-    components.push(`[nodeId=${snapshot.nodeId}]`);
+  if (options.includeRef) {
+    components.push(`[ref=${snapshot.ref}]`);
   }
   if (options.includeClassList) {
     for (const className of snapshot.classList ?? []) {
@@ -272,11 +275,11 @@ function createSnapshot(root, options = {}) {
     ...options
   };
   const counter = new Counter(opts.startId);
-  const nodeMap = /* @__PURE__ */ new Map();
+  const refMap = /* @__PURE__ */ new Map();
   const tree = new SnapshotTree(root, null, counter, opts);
-  tree.fillMap(nodeMap);
+  tree.fillMap(refMap);
   return {
-    nodeMap,
+    refMap,
     snapshot: tree.toJson(),
     maxId: counter.value
   };
@@ -288,7 +291,7 @@ var SnapshotTree = class _SnapshotTree {
     this.counter = counter;
     this.options = options;
     this.children = [];
-    this.nodeId = this.counter.next();
+    this.ref = this.counter.next();
     this.classList = [...this.element?.classList ?? []];
     if (this.element) {
       this.parseTree(this.element, this.getAcceptedChildren(this.element));
@@ -391,7 +394,7 @@ var SnapshotTree = class _SnapshotTree {
     });
   }
   fillMap(map) {
-    map.set(this.nodeId, this.node);
+    map.set(this.ref, this.node);
     for (const child of this.children) {
       child.fillMap(map);
     }
@@ -399,7 +402,7 @@ var SnapshotTree = class _SnapshotTree {
   toJson() {
     const { top, left, width, height } = this.clientRect;
     return {
-      nodeId: this.nodeId,
+      ref: this.ref,
       nodeType: this.node instanceof Element ? "element" : "text",
       leaf: this.leaf,
       tagName: this.tagName,
@@ -431,8 +434,8 @@ export {
   DEFAULT_SEMANTIC_TAGS,
   DEFAULT_SKIP_TAGS,
   SnapshotTree,
-  captureAncestorHtml,
   captureHtmlLine,
+  captureNodePath,
   containsSelector,
   createSnapshot,
   deepIsHidden,

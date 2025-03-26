@@ -17,15 +17,17 @@
         "dev": "npm run clean && tsc -b -w",
         "compile": "npm run clean && tsc -b",
         "compile:page": "esbuild src/page/index.ts --bundle --outfile=build/page.mjs --target=es2022 --format=esm",
+        "add:build": "git add ./build",
         "lint": "eslint --cache",
         "test": "NODE_ENV=test mocha",
-        "version": "npm run compile && git add ./build",
+        "version": "npm run compile",
         "postversion": "npm publish --access=public && git push --tags origin main"
     },
     "pre-commit": [
         "lint",
         "compile",
-        "compile:page"
+        "compile:page",
+        "add:build"
     ],
     "license": "ISC",
     "devDependencies": {
