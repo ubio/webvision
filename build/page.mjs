@@ -318,10 +318,6 @@ var SnapshotTree = class _SnapshotTree {
   get depth() {
     return this.parent ? this.parent.depth + 1 : 0;
   }
-  get inlineText() {
-    const text = this.node instanceof HTMLElement ? this.node.innerText : this.node.textContent;
-    return normalizeText(text ?? "");
-  }
   get leaf() {
     return this.children.length === 0;
   }
@@ -363,6 +359,7 @@ var SnapshotTree = class _SnapshotTree {
    */
   collapseWrapper(el, child) {
     if (child instanceof Text) {
+      this.textContent = normalizeText(child.textContent ?? "");
       return;
     }
     this.classList.push(...child.classList);
@@ -428,7 +425,7 @@ var SnapshotTree = class _SnapshotTree {
         height
       },
       classList: this.node instanceof Element ? this.classList : void 0,
-      textContent: this.leaf ? this.inlineText : void 0,
+      textContent: this.textContent,
       href: this.href,
       src: this.src,
       children: this.leaf ? void 0 : this.children.map((child) => child.toJson())

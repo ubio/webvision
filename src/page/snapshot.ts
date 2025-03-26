@@ -75,6 +75,7 @@ export class SnapshotTree {
     ref: number;
     classList: string[];
     children: SnapshotTree[] = [];
+    textContent?: string;
 
     constructor(
         public node: Element | Text,
@@ -95,13 +96,6 @@ export class SnapshotTree {
 
     get depth(): number {
         return this.parent ? this.parent.depth + 1 : 0;
-    }
-
-    get inlineText() {
-        const text = this.node instanceof HTMLElement ?
-            this.node.innerText :
-            this.node.textContent;
-        return normalizeText(text ?? '');
     }
 
     get leaf() {
@@ -152,6 +146,7 @@ export class SnapshotTree {
      */
     private collapseWrapper(el: Element, child: Element | Text) {
         if (child instanceof Text) {
+            this.textContent = normalizeText(child.textContent ?? '');
             return;
         }
         this.classList.push(...child.classList);
@@ -229,7 +224,7 @@ export class SnapshotTree {
                 height,
             },
             classList: this.node instanceof Element ? this.classList : undefined,
-            textContent: this.leaf ? this.inlineText : undefined,
+            textContent: this.textContent,
             href: this.href,
             src: this.src,
             children: this.leaf ? undefined : this.children.map(child => child.toJson()),
