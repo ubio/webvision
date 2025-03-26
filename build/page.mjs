@@ -97,7 +97,7 @@ function captureHtmlLine(el) {
 function renderSnapshot(snapshot, options = {}) {
   const opts = {
     depth: 0,
-    includeRef: true,
+    includeRef: false,
     includeClassList: false,
     ...options
   };

@@ -10,7 +10,7 @@ export interface SnapshotRenderOptions {
 export function renderSnapshot(snapshot: SnapshotItem, options: Partial<SnapshotRenderOptions> = {}) {
     const opts: SnapshotRenderOptions = {
         depth: 0,
-        includeRef: true,
+        includeRef: false,
         includeClassList: false,
         ...options,
     };
