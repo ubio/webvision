@@ -81,7 +81,7 @@ function captureAncestorsHtml(el, includeText = true) {
   }
   if (includeText) {
     const anyEl = el;
-    path.unshift(anyEl.value ?? anyEl.innerText ?? anyEl.textContent ?? "");
+    path.unshift(anyEl.value || anyEl.innerText || anyEl.textContent || "");
   }
   return path.reverse().filter(Boolean);
 }
@@ -104,7 +104,7 @@ function captureHtml(el) {
     const anyEl = el;
     return [
       captureHtmlLine(el),
-      anyEl.value ?? anyEl.innerText ?? anyEl.textContent ?? "",
+      anyEl.value || anyEl.innerText || anyEl.textContent || "",
       `</${el.tagName.toLowerCase()}>`
     ].filter(Boolean).join("");
   }
@@ -224,15 +224,6 @@ function isRecursiveInline(el, ignoreTags = []) {
   }
   return true;
 }
-function getVisibleText(node) {
-  getSelection()?.removeAllRanges();
-  const range = document.createRange();
-  range.selectNode(node);
-  getSelection()?.addRange(range);
-  const visibleText = getSelection()?.toString().trim();
-  getSelection()?.removeAllRanges();
-  return visibleText ?? "";
-}
 
 // src/page/snapshot.ts
 var DEFAULT_SKIP_TAGS = ["svg", "script", "noscript", "style", "link", "meta"];
@@ -284,6 +275,9 @@ var DEFAULT_SEMANTIC_TAGS = [
   "sup"
 ];
 function createSnapshot(root, options = {}) {
+  document.querySelectorAll("script, noscript, style").forEach((el) => {
+    el.style.display = "none";
+  });
   const opts = {
     startId: 0,
     skipHidden: true,
@@ -325,7 +319,7 @@ var SnapshotTree = class _SnapshotTree {
     return this.parent ? this.parent.depth + 1 : 0;
   }
   get inlineText() {
-    const text = getVisibleText(this.node);
+    const text = this.node instanceof HTMLElement ? this.node.innerText : this.node.textContent;
     return normalizeText(text ?? "");
   }
   get leaf() {
@@ -462,7 +456,6 @@ export {
   createSnapshot,
   deepIsHidden,
   getHighlightContainer,
-  getVisibleText,
   hasVisibleArea,
   highlightEl,
   highlightSnapshot,

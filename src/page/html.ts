@@ -9,7 +9,7 @@ export function captureAncestorsHtml(el: SnapshotNode, includeText = true): stri
     }
     if (includeText) {
         const anyEl = el as any;
-        path.unshift(anyEl.value ?? anyEl.innerText ?? anyEl.textContent ?? '');
+        path.unshift(anyEl.value || anyEl.innerText || anyEl.textContent || '');
     }
     return path.reverse().filter(Boolean);
 }
@@ -34,7 +34,7 @@ export function captureHtml(el: SnapshotNode) {
         const anyEl = el as any;
         return [
             captureHtmlLine(el),
-            anyEl.value ?? anyEl.innerText ?? anyEl.textContent ?? '',
+            anyEl.value || anyEl.innerText || anyEl.textContent || '',
             `</${el.tagName.toLowerCase()}>`,
         ].filter(Boolean).join('');
     }
