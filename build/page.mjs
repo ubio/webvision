@@ -80,17 +80,38 @@ function captureAncestorsHtml(el, includeText = true) {
     current = current.parentElement;
   }
   if (includeText) {
-    path.unshift(el.innerText);
+    const anyEl = el;
+    path.unshift(anyEl.value ?? anyEl.innerText ?? anyEl.textContent ?? "");
   }
   return path.reverse().filter(Boolean);
 }
 function captureHtmlLine(el) {
   const html = [];
-  html.push(`${el.tagName.toLowerCase()}`);
-  for (const attr of el.attributes) {
-    html.push(`${attr.name}="${attr.value}"`);
+  if (el instanceof HTMLElement) {
+    html.push(`${el.tagName.toLowerCase()}`);
+    for (const attr of el.attributes) {
+      html.push(`${attr.name}="${attr.value}"`);
+    }
+    return `<${html.join(" ")}>`;
   }
-  return `<${html.join(" ")}>`;
+  if (el instanceof Text) {
+    return el.textContent;
+  }
+  return "";
+}
+function captureHtml(el) {
+  if (el instanceof HTMLElement) {
+    const anyEl = el;
+    return [
+      captureHtmlLine(el),
+      anyEl.value ?? anyEl.innerText ?? anyEl.textContent ?? "",
+      `</${el.tagName.toLowerCase()}>`
+    ].filter(Boolean).join("");
+  }
+  if (el instanceof Text) {
+    return el.textContent;
+  }
+  return "";
 }
 
 // src/page/render.ts
@@ -435,6 +456,7 @@ export {
   DEFAULT_SKIP_TAGS,
   SnapshotTree,
   captureAncestorsHtml,
+  captureHtml,
   captureHtmlLine,
   containsSelector,
   createSnapshot,
