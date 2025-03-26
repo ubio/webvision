@@ -1,5 +1,6 @@
 // src/page/highlight.ts
 function highlightSnapshot(snapshot, nodeMap) {
+  removeHighlight();
   const container = getHighlightContainer();
   container.innerHTML = "";
   highlightRecursive(snapshot, nodeMap, container);

@@ -4,6 +4,7 @@ export function highlightSnapshot(
     snapshot: SnapshotItem,
     nodeMap: Map<number, SnapshotNode>,
 ) {
+    removeHighlight();
     const container = getHighlightContainer();
     container.innerHTML = '';
     highlightRecursive(snapshot, nodeMap, container);
