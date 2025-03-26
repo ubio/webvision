@@ -30,11 +30,11 @@ export function highlightEl(
     if (isContainerEl) {
         return;
     }
-    const node = nodeMap.get(snapshot.nodeId);
+    const node = nodeMap.get(snapshot.ref);
     if (!(node instanceof Element)) {
         return;
     }
-    const color = getColor(snapshot.nodeId);
+    const color = getColor(snapshot.ref);
     const rect = node.getBoundingClientRect();
     const overlay = document.createElement('div');
     container.appendChild(overlay);
@@ -58,7 +58,7 @@ export function highlightEl(
     label.style.opacity = '0.8';
     label.style.padding = '0 2px';
     label.style.transform = 'translateY(50%)';
-    label.textContent = String(snapshot.nodeId);
+    label.textContent = String(snapshot.ref);
 }
 
 export function removeHighlight() {

@@ -1,11 +1,14 @@
-export function captureAncestorHtml(el: HTMLElement) {
-    const html = [];
+export function captureNodePath(el: HTMLElement, includeText = true): string[] {
+    const path = [];
     let current: HTMLElement | null = el;
     while (current) {
-        html.push(captureHtmlLine(current));
+        path.push(captureHtmlLine(current));
         current = current.parentElement;
     }
-    return html.reverse().join('\n');
+    if (includeText) {
+        path.unshift(el.innerText);
+    }
+    return path.reverse();
 }
 
 export function captureHtmlLine(el: HTMLElement) {

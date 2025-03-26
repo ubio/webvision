@@ -26,7 +26,7 @@ export interface SnapshotOptions {
 }
 
 export interface SnapshotItem {
-    nodeId: number;
+    ref: number;
     nodeType: 'element' | 'text';
     leaf: boolean;
     rect: {
@@ -56,11 +56,11 @@ export function createSnapshot(root: SnapshotNode, options: Partial<SnapshotOpti
         ...options,
     };
     const counter = new Counter(opts.startId);
-    const nodeMap = new Map<number, SnapshotNode>();
+    const refMap = new Map<number, SnapshotNode>();
     const tree = new SnapshotTree(root, null, counter, opts);
-    tree.fillMap(nodeMap);
+    tree.fillMap(refMap);
     return {
-        nodeMap,
+        refMap,
         snapshot: tree.toJson(),
         maxId: counter.value,
     };
@@ -68,7 +68,7 @@ export function createSnapshot(root: SnapshotNode, options: Partial<SnapshotOpti
 
 export class SnapshotTree {
 
-    nodeId: number;
+    ref: number;
     classList: string[];
     children: SnapshotTree[] = [];
 
@@ -78,7 +78,7 @@ export class SnapshotTree {
         public counter: Counter,
         public options: SnapshotOptions,
     ) {
-        this.nodeId = this.counter.next();
+        this.ref = this.counter.next();
         this.classList = [...(this.element?.classList ?? [])];
         if (this.element) {
             this.parseTree(this.element, this.getAcceptedChildren(this.element));
@@ -203,7 +203,7 @@ export class SnapshotTree {
     }
 
     fillMap(map: Map<number, SnapshotNode>) {
-        map.set(this.nodeId, this.node);
+        map.set(this.ref, this.node);
         for (const child of this.children) {
             child.fillMap(map);
         }
@@ -212,7 +212,7 @@ export class SnapshotTree {
     toJson(): SnapshotItem {
         const { top, left, width, height } = this.clientRect;
         return {
-            nodeId: this.nodeId,
+            ref: this.ref,
             nodeType: this.node instanceof Element ? 'element' : 'text',
             leaf: this.leaf,
             tagName: this.tagName,

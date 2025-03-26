@@ -2,7 +2,7 @@ import { SnapshotItem } from './snapshot.js';
 
 export interface SnapshotRenderOptions {
     depth: number;
-    includeNodeId: boolean;
+    includeRef: boolean;
     includeClassList: boolean;
     maxHeight?: number;
 }
@@ -10,7 +10,7 @@ export interface SnapshotRenderOptions {
 export function renderSnapshot(snapshot: SnapshotItem, options: Partial<SnapshotRenderOptions> = {}) {
     const opts: SnapshotRenderOptions = {
         depth: 0,
-        includeNodeId: true,
+        includeRef: true,
         includeClassList: false,
         ...options,
     };
@@ -39,8 +39,8 @@ export function renderLine(snapshot: SnapshotItem, options: SnapshotRenderOption
         return [indent, snapshot.textContent].filter(Boolean).join(' ');
     }
     components.push(snapshot.tagName ?? '');
-    if (options.includeNodeId) {
-        components.push(`[nodeId=${snapshot.nodeId}]`);
+    if (options.includeRef) {
+        components.push(`[ref=${snapshot.ref}]`);
     }
     if (options.includeClassList) {
         for (const className of snapshot.classList ?? []) {

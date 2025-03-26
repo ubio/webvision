@@ -19,7 +19,7 @@
         "compile:page": "esbuild src/page/index.ts --bundle --outfile=build/page.mjs --target=es2022 --format=esm",
         "lint": "eslint --cache",
         "test": "NODE_ENV=test mocha",
-        "version": "npm run compile",
+        "version": "npm run compile && git add ./build",
         "postversion": "npm publish --access=public && git push --tags origin main"
     },
     "pre-commit": [
