@@ -1,4 +1,4 @@
-export function captureNodePath(el: HTMLElement, includeText = true): string[] {
+export function captureAncestorsHtml(el: HTMLElement, includeText = true): string[] {
     const path = [];
     let current: HTMLElement | null = el;
     while (current) {
@@ -8,7 +8,7 @@ export function captureNodePath(el: HTMLElement, includeText = true): string[] {
     if (includeText) {
         path.unshift(el.innerText);
     }
-    return path.reverse();
+    return path.reverse().filter(Boolean);
 }
 
 export function captureHtmlLine(el: HTMLElement) {

@@ -72,7 +72,7 @@ function getColor(index) {
 }
 
 // src/page/html.ts
-function captureNodePath(el, includeText = true) {
+function captureAncestorsHtml(el, includeText = true) {
   const path = [];
   let current = el;
   while (current) {
@@ -82,7 +82,7 @@ function captureNodePath(el, includeText = true) {
   if (includeText) {
     path.unshift(el.innerText);
   }
-  return path.reverse();
+  return path.reverse().filter(Boolean);
 }
 function captureHtmlLine(el) {
   const html = [];
@@ -434,8 +434,8 @@ export {
   DEFAULT_SEMANTIC_TAGS,
   DEFAULT_SKIP_TAGS,
   SnapshotTree,
+  captureAncestorsHtml,
   captureHtmlLine,
-  captureNodePath,
   containsSelector,
   createSnapshot,
   deepIsHidden,
