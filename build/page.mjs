@@ -1,22 +1,22 @@
 // src/page/highlight.ts
-function highlightSnapshot(snapshot, nodeMap) {
+function highlightSnapshot(snapshot, refMap) {
   removeHighlight();
   const container = getHighlightContainer();
   container.innerHTML = "";
-  highlightRecursive(snapshot, nodeMap, container);
+  highlightRecursive(snapshot, refMap, container);
 }
-function highlightRecursive(snapshot, nodeMap, container) {
-  highlightEl(snapshot, nodeMap, container);
+function highlightRecursive(snapshot, refMap, container) {
+  highlightEl(snapshot, refMap, container);
   for (const child of snapshot.children ?? []) {
-    highlightRecursive(child, nodeMap, container);
+    highlightRecursive(child, refMap, container);
   }
 }
-function highlightEl(snapshot, nodeMap, container) {
+function highlightEl(snapshot, refMap, container) {
   const isContainerEl = !snapshot.leaf && snapshot.children?.every((child) => child.nodeType === "element");
   if (isContainerEl) {
     return;
   }
-  const node = nodeMap.get(snapshot.ref);
+  const node = refMap.get(snapshot.ref);
   if (!(node instanceof Element)) {
     return;
   }

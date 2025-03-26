@@ -2,35 +2,35 @@ import { SnapshotItem, SnapshotNode } from './snapshot.js';
 
 export function highlightSnapshot(
     snapshot: SnapshotItem,
-    nodeMap: Map<number, SnapshotNode>,
+    refMap: Map<number, SnapshotNode>,
 ) {
     removeHighlight();
     const container = getHighlightContainer();
     container.innerHTML = '';
-    highlightRecursive(snapshot, nodeMap, container);
+    highlightRecursive(snapshot, refMap, container);
 }
 
 function highlightRecursive(
     snapshot: SnapshotItem,
-    nodeMap: Map<number, SnapshotNode>,
+    refMap: Map<number, SnapshotNode>,
     container: HTMLElement,
 ) {
-    highlightEl(snapshot, nodeMap, container);
+    highlightEl(snapshot, refMap, container);
     for (const child of snapshot.children ?? []) {
-        highlightRecursive(child, nodeMap, container);
+        highlightRecursive(child, refMap, container);
     }
 }
 
 export function highlightEl(
     snapshot: SnapshotItem,
-    nodeMap: Map<number, SnapshotNode>,
+    refMap: Map<number, SnapshotNode>,
     container: HTMLElement,
 ) {
     const isContainerEl = !snapshot.leaf && snapshot.children?.every(child => child.nodeType === 'element');
     if (isContainerEl) {
         return;
     }
-    const node = nodeMap.get(snapshot.ref);
+    const node = refMap.get(snapshot.ref);
     if (!(node instanceof Element)) {
         return;
     }
